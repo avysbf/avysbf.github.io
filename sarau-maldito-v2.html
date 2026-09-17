@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sarau Maldito — Simulador de Bar</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #111010;
+    --surface: #1a1919;
+    --surface2: #222121;
+    --border: #2e2d2d;
+    --red: #c0392b;
+    --green: #27ae60;
+    --yellow: #e2a800;
+    --text: #e8e4df;
+    --text-dim: #8a8480;
+    --text-muted: #4a4745;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --display: 'Bebas Neue', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .titulo-evento {
+    font-family: var(--display);
+    font-size: 52px;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .titulo-evento span { color: var(--red); }
+
+  .subtitulo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    padding-bottom: 6px;
+  }
+
+  .grid-principal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin: 16px auto 0;
+    max-width: 1100px;
+    background: var(--border);
+    padding: 0 40px;
+  }
+
+  .painel {
+    background: var(--bg);
+    padding: 32px;
+  }
+
+  .painel-titulo {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .controle-grupo { margin-bottom: 20px; }
+
+  .controle-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .valor-badge {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--red);
+    border-radius: 0;
+    cursor: pointer;
+  }
+
+  input[type="number"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 6px 10px;
+    width: 90px;
+    outline: none;
+    text-align: right;
+  }
+
+  input[type="number"]:focus { border-color: var(--red); }
+
+  .linha-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .linha-item:last-child { border-bottom: none; }
+
+  .item-nome { font-size: 13px; color: var(--text); flex: 1; min-width: 100px; }
+  .item-sub { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  .item-campos { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .campo-wrapper { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .campo-label-mini { font-family: var(--mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+
+  .margem-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--surface2);
+    color: var(--green);
+    min-width: 55px;
+    text-align: center;
+  }
+
+  /* ALERTA TETO */
+  .alerta-teto {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    display: none;
+  }
+  .alerta-teto.ativo { display: block; background: rgba(192,57,43,0.15); color: var(--red); border-left: 2px solid var(--red); }
+  .alerta-teto.ok { display: block; background: rgba(39,174,96,0.1); color: var(--green); border-left: 2px solid var(--green); }
+
+  /* RESULTADO */
+  .resultado-bloco {
+    background: var(--surface);
+    padding: 24px 40px;
+    border-top: 2px solid var(--red);
+    margin: 2px auto 0;
+    max-width: 1100px;
+  }
+
+  .resultado-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    background: var(--border);
+    margin-bottom: 2px;
+  }
+
+  .resultado-celula {
+    background: var(--bg);
+    padding: 20px 24px;
+    text-align: center;
+  }
+
+  .resultado-celula-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .resultado-valor {
+    font-family: var(--display);
+    font-size: 32px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+
+  .resultado-valor.positivo { color: var(--green); }
+  .resultado-valor.negativo { color: var(--red); }
+  .resultado-valor.neutro { color: var(--yellow); }
+  .resultado-valor.branco { color: var(--text); }
+
+  .resultado-sub { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+  /* MODO INGRESSO */
+  .modo-wrap {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 20px;
+    background: var(--border);
+    padding: 2px;
+  }
+
+  .modo-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .modo-btn.ativo { background: var(--red); color: var(--text); }
+
+  /* SECAO CUSTOS FIXOS */
+  .custos-fixos {
+    margin: 2px auto 0;
+    max-width: 1100px;
+    background: var(--surface);
+    padding: 24px 40px;
+  }
+
+  .custo-linha {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    padding: 16px;
+    gap: 8px;
+  }
+
+  .custo-nome { font-size: 13px; color: var(--text-dim); }
+  .custo-valor { font-family: var(--mono); font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+
+  .insight {
+    background: var(--surface2);
+    border-left: 3px solid var(--red);
+    padding: 14px 18px;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    font-family: var(--mono);
+  }
+
+  .insight strong { color: var(--yellow); font-weight: 600; }
+
+  /* BRINDE TAG */
+  .brinde-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    background: rgba(226,168,0,0.15);
+    color: var(--yellow);
+    border: 1px solid rgba(226,168,0,0.3);
+    padding: 2px 6px;
+    margin-top: 4px;
+    display: inline-block;
+  }
+
+  /* META BAR */
+  .meta-bar-wrap { margin-top: 16px; }
+  .meta-bar-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .meta-bar-bg { background: var(--surface2); height: 6px; width: 100%; }
+  .meta-bar-fill { height: 6px; background: var(--green); transition: width 0.3s; }
+  .meta-bar-fill.alerta { background: var(--red); }
+
+  @media (max-width: 700px) {
+    header { padding: 24px 20px 20px; }
+    .titulo-evento { font-size: 38px; }
+    .grid-principal { grid-template-columns: 1fr; padding: 0 20px; }
+    .painel { padding: 24px 20px; }
+    .resultado-grid { grid-template-columns: 1fr 1fr; }
+    .custos-fixos { padding: 20px; }
+    .resultado-bloco { padding: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="titulo-evento">SARAU <span>MALDITO</span></div>
+    <div class="subtitulo">Agrado, Rua Buenos Aires 70 / 601 &nbsp;|&nbsp; Sábados 16h–21h &nbsp;|&nbsp; Simulador financeiro</div>
+  </div>
+</header>
+
+<!-- MODO INGRESSO -->
+<div style="padding: 24px 40px 0; max-width: 1100px; margin: 0 auto;">
+  <div class="painel-titulo">Estratégia de entrada</div>
+  <div class="modo-wrap" style="max-width: 500px;">
+    <button class="modo-btn" id="btn-livre" onclick="setModo('livre')">Entrada livre<br><span style="opacity:0.6">contribuição voluntária</span></button>
+    <button class="modo-btn ativo" id="btn-brinde" onclick="setModo('brinde')">Ingresso com brinde<br><span style="opacity:0.6">R$ 30 + 1 latão Brahma</span></button>
+  </div>
+  <div id="nota-modo" class="insight" style="max-width: 500px; margin-top: 0; margin-bottom: 0;"></div>
+</div>
+
+<div class="grid-principal" style="background: transparent; gap: 16px; padding: 24px 40px 0;">
+
+  <!-- PAINEL BAR -->
+  <div style="background: var(--bg);">
+    <div class="painel" style="padding: 0;">
+      <div class="painel-titulo">Estoque do bar</div>
+
+      <div class="linha-item">
+        <div>
+          <div class="item-nome">Brahma Latão</div>
+          <div class="item-sub">custo R$ 4,50 / unid (pack c/12 = R$54)</div>
+          <div class="brinde-tag" id="tag-brinde-brahma">inclui brindes do ingresso</div>
+        </div>
+        <div class="item-campos">
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">QTDE</div>
+            <input type="number" id="qtd-brahma" value="48" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">VENDA</div>
+            <input type="number" id="preco-brahma" value="10" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">MARGEM</div>
+            <div class="margem-tag" id="mg-brahma">+122%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="linha-item">
+        <div>
+          <div class="item-nome">Heineken Latão</div>
+          <div class="item-sub">custo R$ 6,83 / unid (pack c/12 = R$82)</div>
+        </div>
+        <div class="item-campos">
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">QTDE</div>
+            <input type="number" id="qtd-heineken" value="24" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">VENDA</div>
+            <input type="number" id="preco-heineken" value="15" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">MARGEM</div>
+            <div class="margem-tag" id="mg-heineken">+120%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="linha-item">
+        <div>
+          <div class="item-nome">Xeque Mate</div>
+          <div class="item-sub">custo R$ 13,33 / unid (pack c/12 = R$160)</div>
+        </div>
+        <div class="item-campos">
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">QTDE</div>
+            <input type="number" id="qtd-xeque" value="24" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">VENDA</div>
+            <input type="number" id="preco-xeque" value="28" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">MARGEM</div>
+            <div class="margem-tag" id="mg-xeque">+110%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="linha-item">
+        <div>
+          <div class="item-nome">Água 500ml</div>
+          <div class="item-sub">custo R$ 2,17 / unid (pack c/12 = R$26)</div>
+        </div>
+        <div class="item-campos">
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">QTDE</div>
+            <input type="number" id="qtd-agua" value="24" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">VENDA</div>
+            <input type="number" id="preco-agua" value="5" min="0" onchange="calcular()">
+          </div>
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">MARGEM</div>
+            <div class="margem-tag" id="mg-agua">+130%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="linha-item" style="border-bottom: none;">
+        <div>
+          <div class="item-nome">Gelo</div>
+          <div class="item-sub">R$ 14,00 / saco 5kg</div>
+        </div>
+        <div class="item-campos">
+          <div class="campo-wrapper">
+            <div class="campo-label-mini">SACOS</div>
+            <input type="number" id="qtd-gelo" value="3" min="0" onchange="calcular()">
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between;">
+        <span style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">CUSTO TOTAL DO BAR</span>
+        <span style="font-family: var(--mono); font-size: 15px; color: var(--red);" id="custo-bar-total">R$ 0</span>
+      </div>
+      <div style="margin-top: 6px; display: flex; justify-content: space-between;">
+        <span style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">RECEITA SE VENDER TUDO</span>
+        <span style="font-family: var(--mono); font-size: 15px; color: var(--text);" id="receita-bar-total">R$ 0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAINEL ENTRADA -->
+  <div style="background: var(--bg);">
+    <div class="painel" style="padding: 0;">
+      <div class="painel-titulo">Público e entrada</div>
+
+      <div class="controle-grupo">
+        <div class="controle-label">
+          Pessoas que pagam entrada
+          <span class="valor-badge" id="badge-pagantes">30 pessoas</span>
+        </div>
+        <input type="range" id="slider-pagantes" min="0" max="40" value="30" oninput="atualizarBadge('pagantes'); calcular()">
+        <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--text-muted);">0</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--text-muted);">40</span>
+        </div>
+        <div class="meta-bar-wrap">
+          <div class="meta-bar-label">
+            <span>meta: 30 pagantes</span>
+            <span id="pct-meta">100%</span>
+          </div>
+          <div class="meta-bar-bg">
+            <div class="meta-bar-fill" id="barra-meta" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controle-grupo" id="grupo-ticket-livre">
+        <div class="controle-label">
+          Valor sugerido da entrada
+          <span class="valor-badge" id="badge-entrada">R$ 25</span>
+        </div>
+        <input type="range" id="slider-entrada" min="10" max="60" value="25" oninput="atualizarBadge('entrada'); calcular()">
+        <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--text-muted);">R$ 10</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--text-muted);">R$ 60</span>
+        </div>
+      </div>
+
+      <!-- modo brinde: fixo em R$30 -->
+      <div class="controle-grupo" id="grupo-ticket-brinde" style="display:none;">
+        <div class="controle-label">
+          Valor do ingresso com brinde
+          <span class="valor-badge">R$ 30 + 1 latão</span>
+        </div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">
+          Cada ingresso vendido consome 1 Brahma do estoque (custo R$ 4,50).
+          Receita líquida por ingresso: R$ 25,50.
+        </div>
+      </div>
+
+      <div class="controle-grupo">
+        <div class="controle-label">
+          % do estoque vendido no bar
+          <span class="valor-badge" id="badge-venda">75%</span>
+        </div>
+        <input type="range" id="slider-venda" min="0" max="100" value="75" oninput="atualizarBadge('venda'); calcular()">
+        <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--text-muted);">0%</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--text-muted);">100%</span>
+        </div>
+      </div>
+
+      <div style="background: var(--surface2); padding: 16px; margin-top: 8px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">Receita entrada</span>
+          <span style="font-family: var(--mono); font-size: 13px; color: var(--text);" id="rec-entrada">R$ 0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">Receita bar</span>
+          <span style="font-family: var(--mono); font-size: 13px; color: var(--text);" id="rec-bar">R$ 0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--border);">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">Total receita</span>
+          <span style="font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text);" id="rec-total">R$ 0</span>
+        </div>
+      </div>
+
+      <div class="insight" id="insight-texto">Calculando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOS FIXOS -->
+<div class="custos-fixos">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+    <div class="painel-titulo" style="margin-bottom: 0; border-bottom: none;">Custos fixos</div>
+    <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted);">teto: <span style="color: var(--yellow);">R$ 600</span></div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--border);">
+    <div class="custo-linha">
+      <span class="custo-nome">Portaria</span>
+      <span class="custo-valor">R$ <input type="number" id="cf-portaria" value="300" min="0" onchange="calcular()"></span>
+      <span style="font-family: var(--mono); font-size: 9px; color: var(--text-muted);">pode ser voluntário</span>
+    </div>
+    <div class="custo-linha">
+      <span class="custo-nome">Transporte equip.</span>
+      <span class="custo-valor">R$ <input type="number" id="cf-transp" value="200" min="0" onchange="calcular()"></span>
+    </div>
+    <div class="custo-linha">
+      <span class="custo-nome">Limpeza</span>
+      <span class="custo-valor">R$ <input type="number" id="cf-limpeza" value="400" min="0" onchange="calcular()"></span>
+    </div>
+    <div class="custo-linha">
+      <span class="custo-nome">Ambientação</span>
+      <span class="custo-valor">R$ <input type="number" id="cf-amb" value="200" min="0" onchange="calcular()"></span>
+    </div>
+  </div>
+  <div style="display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 12px;">
+    <span style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">TOTAL CUSTOS FIXOS</span>
+    <span style="font-family: var(--mono); font-size: 15px;" id="total-fixos">R$ 1.100</span>
+  </div>
+  <div class="alerta-teto" id="alerta-teto"></div>
+</div>
+
+<!-- RESULTADO FINAL -->
+<div class="resultado-bloco">
+  <div class="painel-titulo" style="margin-bottom: 20px;">Resultado do evento</div>
+  <div class="resultado-grid">
+    <div class="resultado-celula">
+      <div class="resultado-celula-label">Custo fixo</div>
+      <div class="resultado-valor negativo" id="res-fixo">R$ 0</div>
+      <div class="resultado-sub">portaria + transporte + limpeza + amb.</div>
+    </div>
+    <div class="resultado-celula">
+      <div class="resultado-celula-label">Custo bar</div>
+      <div class="resultado-valor negativo" id="res-custobar">R$ 0</div>
+      <div class="resultado-sub">estoque + gelo</div>
+    </div>
+    <div class="resultado-celula">
+      <div class="resultado-celula-label">Receita total</div>
+      <div class="resultado-valor branco" id="res-receita">R$ 0</div>
+      <div class="resultado-sub">entrada + bar</div>
+    </div>
+    <div class="resultado-celula">
+      <div class="resultado-celula-label">Resultado</div>
+      <div class="resultado-valor" id="res-final">R$ 0</div>
+      <div class="resultado-sub" id="res-status">calculando</div>
+    </div>
+  </div>
+  <div style="margin-top: 12px; text-align: center;">
+    <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted);" id="ponto-equilibrio"></div>
+  </div>
+</div>
+
+<script>
+  const CUSTOS_UNIT = { brahma: 4.50, heineken: 6.83, xeque: 13.33, agua: 2.17, gelo: 14.00 };
+  let modo = 'brinde';
+
+  function setModo(m) {
+    modo = m;
+    document.getElementById('btn-livre').classList.toggle('ativo', m === 'livre');
+    document.getElementById('btn-brinde').classList.toggle('ativo', m === 'brinde');
+    document.getElementById('grupo-ticket-livre').style.display = m === 'livre' ? 'block' : 'none';
+    document.getElementById('grupo-ticket-brinde').style.display = m === 'brinde' ? 'block' : 'none';
+    document.getElementById('tag-brinde-brahma').style.display = m === 'brinde' ? 'inline-block' : 'none';
+    calcular();
+  }
+
+  function fmt(v) {
+    const abs = Math.abs(Math.round(v));
+    const str = 'R$ ' + abs.toLocaleString('pt-BR');
+    return v < 0 ? '-' + str : str;
+  }
+
+  function pct(custo, venda) {
+    if (!custo) return '—';
+    const m = ((venda - custo) / custo) * 100;
+    return (m >= 0 ? '+' : '') + Math.round(m) + '%';
+  }
+
+  function atualizarBadge(tipo) {
+    if (tipo === 'pagantes') {
+      document.getElementById('badge-pagantes').textContent = document.getElementById('slider-pagantes').value + ' pessoas';
+    } else if (tipo === 'entrada') {
+      document.getElementById('badge-entrada').textContent = 'R$ ' + document.getElementById('slider-entrada').value;
+    } else if (tipo === 'venda') {
+      document.getElementById('badge-venda').textContent = document.getElementById('slider-venda').value + '%';
+    }
+  }
+
+  function calcular() {
+    const qtdB = +document.getElementById('qtd-brahma').value || 0;
+    const qtdH = +document.getElementById('qtd-heineken').value || 0;
+    const qtdX = +document.getElementById('qtd-xeque').value || 0;
+    const qtdA = +document.getElementById('qtd-agua').value || 0;
+    const qtdG = +document.getElementById('qtd-gelo').value || 0;
+
+    const pB = +document.getElementById('preco-brahma').value || 0;
+    const pH = +document.getElementById('preco-heineken').value || 0;
+    const pX = +document.getElementById('preco-xeque').value || 0;
+    const pA = +document.getElementById('preco-agua').value || 0;
+
+    const pagantes = +document.getElementById('slider-pagantes').value || 0;
+    const ticketLivre = +document.getElementById('slider-entrada').value || 0;
+    const pctVenda = (+document.getElementById('slider-venda').value || 0) / 100;
+
+    const cfP = +document.getElementById('cf-portaria').value || 0;
+    const cfT = +document.getElementById('cf-transp').value || 0;
+    const cfL = +document.getElementById('cf-limpeza').value || 0;
+    const cfA = +document.getElementById('cf-amb').value || 0;
+
+    // Margens
+    document.getElementById('mg-brahma').textContent = pct(CUSTOS_UNIT.brahma, pB);
+    document.getElementById('mg-heineken').textContent = pct(CUSTOS_UNIT.heineken, pH);
+    document.getElementById('mg-xeque').textContent = pct(CUSTOS_UNIT.xeque, pX);
+    document.getElementById('mg-agua').textContent = pct(CUSTOS_UNIT.agua, pA);
+
+    // Custo bar
+    const custoBar = (qtdB * CUSTOS_UNIT.brahma) + (qtdH * CUSTOS_UNIT.heineken) +
+                     (qtdX * CUSTOS_UNIT.xeque) + (qtdA * CUSTOS_UNIT.agua) +
+                     (qtdG * CUSTOS_UNIT.gelo);
+
+    const custosFixos = cfP + cfT + cfL + cfA;
+
+    // Brinde: pagantes consomem 1 Brahma cada do estoque (já incluído)
+    // A Brahma vendável no bar é (qtdB - pagantes) se modo brinde
+    let recEntrada, recBar;
+
+    if (modo === 'brinde') {
+      const brahmasBrinde = Math.min(pagantes, qtdB);
+      const brahmasVendaveis = Math.max(0, qtdB - brahmasBrinde);
+      recEntrada = pagantes * 30; // ingresso bruto
+      // custo dos brindes já está no custo do bar
+      // receita bar: brahmas vendáveis + resto
+      recBar = (brahmasVendaveis * pB + qtdH * pH + qtdX * pX + qtdA * pA) * pctVenda;
+    } else {
+      recEntrada = pagantes * ticketLivre;
+      recBar = (qtdB * pB + qtdH * pH + qtdX * pX + qtdA * pA) * pctVenda;
+    }
+
+    const recTotal = recEntrada + recBar;
+    const custoTotal = custoBar + custosFixos;
+    const resultado = recTotal - custoTotal;
+
+    // Receita bar máxima (100%)
+    const recBarMax = modo === 'brinde'
+      ? (Math.max(0, qtdB - Math.min(pagantes, qtdB)) * pB + qtdH * pH + qtdX * pX + qtdA * pA)
+      : (qtdB * pB + qtdH * pH + qtdX * pX + qtdA * pA);
+
+    // Updates
+    document.getElementById('custo-bar-total').textContent = fmt(custoBar);
+    document.getElementById('receita-bar-total').textContent = fmt(recBarMax);
+    document.getElementById('rec-entrada').textContent = fmt(recEntrada);
+    document.getElementById('rec-bar').textContent = fmt(recBar);
+    document.getElementById('rec-total').textContent = fmt(recTotal);
+    document.getElementById('total-fixos').textContent = fmt(custosFixos);
+    document.getElementById('res-fixo').textContent = fmt(custosFixos);
+    document.getElementById('res-custobar').textContent = fmt(custoBar);
+    document.getElementById('res-receita').textContent = fmt(recTotal);
+
+    const elFinal = document.getElementById('res-final');
+    const elStatus = document.getElementById('res-status');
+    elFinal.textContent = fmt(resultado);
+    if (resultado > 0) {
+      elFinal.className = 'resultado-valor positivo';
+      elStatus.textContent = 'no verde';
+    } else if (resultado === 0) {
+      elFinal.className = 'resultado-valor neutro';
+      elStatus.textContent = 'empatou';
+    } else {
+      elFinal.className = 'resultado-valor negativo';
+      elStatus.textContent = 'no vermelho';
+    }
+
+    // Teto custos fixos
+    const alertaTeto = document.getElementById('alerta-teto');
+    const totalFixosEl = document.getElementById('total-fixos');
+    if (custosFixos > 600) {
+      alertaTeto.textContent = `Atenção: custos fixos ultrapassam o teto de R$ 600 em R$ ${Math.round(custosFixos - 600)}.`;
+      alertaTeto.className = 'alerta-teto ativo';
+      totalFixosEl.style.color = 'var(--red)';
+    } else {
+      alertaTeto.textContent = `Dentro do teto: R$ ${Math.round(600 - custosFixos)} de folga.`;
+      alertaTeto.className = 'alerta-teto ok';
+      totalFixosEl.style.color = 'var(--green)';
+    }
+
+    // Barra de meta
+    const pctMetaVal = Math.min(100, Math.round((pagantes / 30) * 100));
+    document.getElementById('pct-meta').textContent = pctMetaVal + '%';
+    const barraEl = document.getElementById('barra-meta');
+    barraEl.style.width = pctMetaVal + '%';
+    barraEl.className = 'meta-bar-fill' + (pagantes < 20 ? ' alerta' : '');
+
+    // Ponto de equilíbrio
+    const peEl = document.getElementById('ponto-equilibrio');
+    if (modo === 'brinde') {
+      const recPorIngresso = 30 - CUSTOS_UNIT.brahma; // 25.50
+      const necessarios = Math.ceil((custoTotal - recBar) / recPorIngresso);
+      if (necessarios <= 0) {
+        peEl.textContent = 'O bar já cobre tudo. Qualquer ingresso é lucro.';
+      } else if (necessarios > 40) {
+        peEl.textContent = 'Nem 40 ingressos cobrem com esse giro de bar. Revise custos fixos.';
+      } else {
+        peEl.textContent = `Ponto de equilíbrio: ${necessarios} ingressos vendidos (com ${Math.round(pctVenda * 100)}% do bar girado).`;
+      }
+    } else {
+      const tick = ticketLivre;
+      if (tick > 0) {
+        const necessarios = Math.ceil((custoTotal - recBar) / tick);
+        if (necessarios <= 0) peEl.textContent = 'O bar já paga o evento.';
+        else if (necessarios > 40) peEl.textContent = 'Nem 40 entradas cobrem com esse giro. Revise custos.';
+        else peEl.textContent = `Ponto de equilíbrio: ${necessarios} pessoas pagando R$ ${tick} (com ${Math.round(pctVenda * 100)}% do bar girado).`;
+      }
+    }
+
+    // Nota modo
+    const notaEl = document.getElementById('nota-modo');
+    if (modo === 'brinde') {
+      notaEl.innerHTML = '<strong>Ingresso R$ 30 + 1 latão Brahma.</strong> Receita líquida por ingresso: R$ 25,50 (desconta o custo do brinde). O latão já sai do estoque — ajuste a quantidade de Brahma considerando os brindes.';
+    } else {
+      notaEl.innerHTML = '<strong>Entrada livre com contribuição sugerida.</strong> Depende da adesão do público. Sem garantia de receita.';
+    }
+  }
+
+  // Init
+  setModo('brinde');
+</script>
+</body>
+</html>
